@@ -50,7 +50,6 @@ In software, **reliability** can be broadly understood as the system’s ability
 
 Hardware failures are common in large-scale systems—disks crash, memory becomes faulty, or network cables get unplugged. Redundancy at the hardware level (e.g., RAID setups, dual power supplies, and backup generators) can help reduce the impact. However, as applications scale, **software-based fault tolerance** becomes increasingly essential to withstand entire machine losses without affecting overall system uptime.
 
-------
 
 ### 2. Software Errors
 
@@ -79,3 +78,59 @@ Although some systems—like prototypes or low-stakes apps—may trade reliabili
 
 Whether you're building for millions or just starting out, **prioritizing reliability shows respect for your users**. While it's not always feasible to prevent every fault, designing systems that detect, contain, and recover from faults is key to long-term stability and user trust.
 
+------
+
+# Summary: Scalability and Performance in Distributed Systems
+
+## Scalability
+
+Scalability refers to a system’s ability to handle increased load, such as a growth in users or data volume. It's not an absolute characteristic but rather a relative one: a system may scale well in one scenario and poorly in another. Evaluating scalability involves asking questions like: *What happens if usage doubles?* or *How can resources be added to maintain performance?*
+
+## Describing Load
+
+To understand and plan for scalability, it's crucial to measure load using **load parameters**—metrics such as requests per second, read/write ratios, or cache hit rates. The right metrics depend on the system architecture.
+
+### Case Study: Twitter
+
+<INSERT 1_2.png>
+
+<INSERT 1_3.png>
+
+
+Twitter provides a useful real-world example. It handles two primary operations:
+- **Post Tweet**: Averaging 4.6k requests/sec, peaking over 12k/sec.
+- **Home Timeline**: Averaging 300k reads/sec.
+
+Initially, Twitter used a **read-heavy model**, fetching all relevant tweets at read time. However, this approach couldn't handle scale. It was replaced with a **write-heavy model**, where tweets are pushed to follower caches on write. This improved read performance but increased write load—especially for users with millions of followers. Twitter eventually adopted a **hybrid model**, fanning out tweets for regular users but using on-demand reads for celebrities.
+
+## Describing Performance
+
+Performance under load is evaluated in two ways:
+1. How does the system behave as load increases, with resources unchanged?
+2. How must resources scale to maintain constant performance?
+
+### Throughput vs. Response Time
+
+In batch systems like Hadoop, **throughput** (records/sec) matters. In online systems, **response time** (time from request to response) is more important.
+
+### Latency vs. Response Time
+
+Although often used interchangeably, **latency** is the waiting time before processing, while **response time** includes latency, processing time, and network delays. Response times vary due to factors like context switching, packet loss, and hardware anomalies.
+
+## Measuring Response Time
+
+Average (mean) response time is a common metric but often misleading. Instead, **percentiles** give a more accurate picture:
+- **p50 (median)**: Half of requests are faster than this value.
+- **p95, p99, p999**: Higher percentiles reveal the slowest (tail) responses.
+
+Tail latencies are critical as they affect the most engaged users. For example, Amazon tracks p999 response times due to their business impact—customers with slow experiences are often the most valuable.
+
+## Queuing Delays and Head-of-Line Blocking
+
+In systems with limited parallel processing, a few slow requests can block others—this is known as **head-of-line blocking**. Hence, it's important to measure performance from the **client side**.
+
+## Percentiles in Practice
+
+Backend services often involve multiple calls for a single user request. A single slow backend call can delay the entire user response—an effect called **tail latency amplification**. Monitoring dashboards should include real-time percentile tracking, using rolling windows (e.g., 10-minute windows with per-minute updates). This requires efficient percentile calculation methods beyond simple averaging.
+
+In summary, building scalable systems requires understanding how load affects performance, choosing the right architecture (like Twitter’s evolution), and using precise metrics like percentiles to monitor and optimize user experience.
