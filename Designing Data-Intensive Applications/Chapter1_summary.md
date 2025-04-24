@@ -80,57 +80,75 @@ Whether you're building for millions or just starting out, **prioritizing reliab
 
 ------
 
-# Summary: Scalability and Performance in Distributed Systems
+# Scalability and Performance: A Summary
 
-## Scalability
+## 📈 What is Scalability?
 
-Scalability refers to a system’s ability to handle increased load, such as a growth in users or data volume. It's not an absolute characteristic but rather a relative one: a system may scale well in one scenario and poorly in another. Evaluating scalability involves asking questions like: *What happens if usage doubles?* or *How can resources be added to maintain performance?*
+Scalability refers to a system's ability to handle increased load effectively. It’s not a binary property—rather, it’s contextual and depends on how the system grows. The key questions to ask are:
+- What happens when our load doubles?
+- How can we add resources to manage growth?
 
-## Describing Load
+## 🔍 Understanding Load
 
-To understand and plan for scalability, it's crucial to measure load using **load parameters**—metrics such as requests per second, read/write ratios, or cache hit rates. The right metrics depend on the system architecture.
+Before discussing scalability, it’s crucial to define what load looks like. Load parameters depend on the system—for example:
+- Requests per second (web servers)
+- Read/write ratios (databases)
+- Active users (chat apps)
 
-### Case Study: Twitter
+### 📊 Twitter Example
 
-![twiite design](assets/chp1_img2.png)
+Twitter’s early architecture illustrates two approaches to scaling:
 
-![twiite design](assets/1_3.png)
+1. **Read-time computation (Query-based):**
+   - Each user’s timeline is dynamically built from a global tweet store.
+   - This became a bottleneck at scale due to expensive read operations.
+
+2. **Write-time fan-out (Cache-based):**
+   - Tweets are pushed to each follower’s cached timeline at publish time.
+   - This improves read speed but increases write amplification.
+
+Eventually, Twitter adopted a **hybrid approach**: most users’ tweets are fanned out immediately, but tweets from celebrities are fetched at read time to reduce the load.
+
+## ⚙️ Measuring Performance
+
+Performance under load can be assessed in two ways:
+- How does performance degrade if resources stay fixed?
+- How much more resource is needed to maintain current performance?
+
+### 🕒 Throughput vs. Response Time
+
+- **Batch systems (e.g., Hadoop):** focus on throughput—how many records per second.
+- **Online systems:** focus on response time—how long a user waits for a result.
+
+### ⏱ Latency vs. Response Time
+
+- **Latency**: time a request waits before being handled.
+- **Response Time**: total time, including service, queueing, and network delays.
+
+### 📈 Response Time as a Distribution
+
+Response times vary due to factors like garbage collection, disk access, or network retransmissions. Therefore, using **percentiles** gives a better picture than averages:
+- **p50 (Median)**: half of the requests are faster.
+- **p95, p99, p999**: show how bad the slowest responses get.
+- Tail latencies (high percentiles) matter most for user experience.
+
+For example, Amazon targets p999 latency for internal services, since a few slow requests can degrade overall UX. A 100ms delay can reduce sales by 1%.
+
+## 🧪 Testing and Monitoring
+
+When stress-testing systems, ensure clients send requests continuously—waiting between them can give false, overly optimistic results.
+
+In real-time dashboards, percentiles are tracked over a rolling window (e.g., the last 10 minutes) to reflect true user experience.
+
+## ⚠️ Tail Latency Amplification
+
+In systems where multiple backend calls are made per user request, the slowest call determines total response time. This effect, known as **tail latency amplification**, means even a small percentage of slow calls can disproportionately impact overall UX.
+
+---
+
+Understanding scalability and performance is critical to building systems that remain fast and reliable as usage grows. Always design with growth, monitoring, and user experience in mind.
 
 
-Twitter provides a useful real-world example. It handles two primary operations:
-- **Post Tweet**: Averaging 4.6k requests/sec, peaking over 12k/sec.
-- **Home Timeline**: Averaging 300k reads/sec.
+------
 
-Initially, Twitter used a **read-heavy model**, fetching all relevant tweets at read time. However, this approach couldn't handle scale. It was replaced with a **write-heavy model**, where tweets are pushed to follower caches on write. This improved read performance but increased write load—especially for users with millions of followers. Twitter eventually adopted a **hybrid model**, fanning out tweets for regular users but using on-demand reads for celebrities.
 
-## Describing Performance
-
-Performance under load is evaluated in two ways:
-1. How does the system behave as load increases, with resources unchanged?
-2. How must resources scale to maintain constant performance?
-
-### Throughput vs. Response Time
-
-In batch systems like Hadoop, **throughput** (records/sec) matters. In online systems, **response time** (time from request to response) is more important.
-
-### Latency vs. Response Time
-
-Although often used interchangeably, **latency** is the waiting time before processing, while **response time** includes latency, processing time, and network delays. Response times vary due to factors like context switching, packet loss, and hardware anomalies.
-
-## Measuring Response Time
-
-Average (mean) response time is a common metric but often misleading. Instead, **percentiles** give a more accurate picture:
-- **p50 (median)**: Half of requests are faster than this value.
-- **p95, p99, p999**: Higher percentiles reveal the slowest (tail) responses.
-
-Tail latencies are critical as they affect the most engaged users. For example, Amazon tracks p999 response times due to their business impact—customers with slow experiences are often the most valuable.
-
-## Queuing Delays and Head-of-Line Blocking
-
-In systems with limited parallel processing, a few slow requests can block others—this is known as **head-of-line blocking**. Hence, it's important to measure performance from the **client side**.
-
-## Percentiles in Practice
-
-Backend services often involve multiple calls for a single user request. A single slow backend call can delay the entire user response—an effect called **tail latency amplification**. Monitoring dashboards should include real-time percentile tracking, using rolling windows (e.g., 10-minute windows with per-minute updates). This requires efficient percentile calculation methods beyond simple averaging.
-
-In summary, building scalable systems requires understanding how load affects performance, choosing the right architecture (like Twitter’s evolution), and using precise metrics like percentiles to monitor and optimize user experience.
