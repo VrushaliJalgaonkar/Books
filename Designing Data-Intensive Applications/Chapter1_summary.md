@@ -92,9 +92,9 @@ To understand and plan for scalability, it's crucial to measure load using **loa
 
 ### Case Study: Twitter
 
-<INSERT 1_2.png>
+![twiite design](assets/chp1_img2.png)
 
-<INSERT 1_3.png>
+![twiite design](assets/1_3.png)
 
 
 Twitter provides a useful real-world example. It handles two primary operations:
