@@ -19,8 +19,6 @@ However, selecting and integrating the right systems is not trivial. Each data s
 
 ## Summary: Thinking About Data Systems
 
-<INSERT:TODO> chapter1_img1.png
-
 In today’s landscape, the lines between traditional data tools like databases, queues, and caches are increasingly blurred. While they once served distinct purposes, modern systems often combine these components, resulting in hybrid solutions like Redis (a cache and datastore) or Kafka (a queue with durability guarantees). These shifts challenge traditional classifications and push us to think of them collectively as **data systems**.
 
 Modern applications have complex and demanding requirements that no single tool can meet. As a result, developers often compose specialized tools into a custom architecture, stitching them together through application logic. This turns application developers into **data system designers**, responsible for ensuring consistency, performance, and scalability across components.
@@ -150,5 +148,49 @@ Understanding scalability and performance is critical to building systems that r
 
 
 ------
+
+## Summary: Maintainability in Software Systems
+
+Maintaining software is often more expensive than building it. Ongoing tasks such as fixing bugs, applying security patches, scaling to new platforms, repaying technical debt, and introducing new features are significant contributors to this cost. However, maintenance is often viewed negatively—especially when it comes to legacy systems, which are difficult to manage due to outdated platforms, unclear architecture, or poor documentation.
+
+To avoid creating painful legacy systems, software should be designed with **maintainability** in mind, guided by three core principles: **Operability**, **Simplicity**, and **Evolvability**.
+
+### Operability: Making Systems Easy to Run
+
+Operability ensures that systems are easy for operations teams to manage. Good operations can often compensate for flawed software, but the reverse is rarely true. Responsibilities of operations teams include monitoring, incident recovery, platform updates, capacity planning, deployment automation, configuration management, and preserving organizational knowledge.
+
+To support operability, systems should:
+- Offer clear runtime visibility and monitoring.
+- Support automation and integration with tools.
+- Avoid single-machine dependencies.
+- Provide intuitive, well-documented operational models.
+- Default to sensible behavior while allowing overrides.
+- Include self-healing capabilities with manual control options.
+- Minimize surprises through predictable behavior.
+
+Systems with strong operability allow teams to focus on strategic improvements rather than routine firefighting.
+
+### Simplicity: Managing Complexity
+
+As software grows, complexity tends to increase, slowing down development and making systems harder to maintain. Symptoms include tight coupling, tangled dependencies, inconsistent naming, and ad hoc hacks. These issues lead to buggy behavior, missed deadlines, and high maintenance costs.
+
+**Simplicity** involves minimizing accidental complexity—problems caused not by the domain itself, but by poor implementation. One of the best strategies for managing complexity is **abstraction**. Abstractions hide unnecessary implementation details and present a clean interface for reuse. For example:
+- High-level languages abstract machine code and CPU internals.
+- SQL abstracts memory management and concurrent access.
+
+While powerful, designing good abstractions is hard, especially in distributed systems. Nonetheless, well-designed abstractions improve code reuse, reduce duplication, and make systems easier to understand and evolve.
+
+### Evolvability: Embracing Change
+
+No system stays static. Business goals evolve, users request new features, platforms become obsolete, and systems grow. Thus, systems must be designed to **evolve**. Evolvability, also known as extensibility or plasticity, means making it easy to introduce changes and adapt to new requirements.
+
+Agile methodologies provide a good foundation, emphasizing iterative development, TDD, and refactoring. However, most Agile practices focus on the application level. This book expands the conversation to larger data systems, exploring how we can refactor and evolve distributed architectures over time.
+
+Evolvability is closely related to simplicity and abstraction. Systems that are easier to understand are naturally easier to change. When designing with evolvability in mind, we future-proof our systems against inevitable changes.
+
+---
+
+By prioritizing **operability**, **simplicity**, and **evolvability**, we can build systems that are easier to run, understand, and change—dramatically improving their long-term maintainability and value.
+
 
 
