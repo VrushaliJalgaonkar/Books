@@ -139,4 +139,81 @@ An **index** is a data structure that enables efficient data retrieval by avoidi
 - Improves crash recovery and supports snapshots.
 
 ---
+# Making an LSM-tree out of SSTables and Comparing with B-Trees
 
+## Overview of LSM-Trees
+
+Log-Structured Merge-Trees (LSM-Trees) are used in modern key-value storage engines like LevelDB, RocksDB, Cassandra, and HBase. They use a combination of in-memory and on-disk data structures:
+- **Memtable**: An in-memory structure for fast writes.
+- **SSTables**: Immutable sorted files written to disk from memtables.
+- **Compaction**: Merging of SSTables to manage space and optimize reads.
+
+Originally described by Patrick O'Neil et al., LSM-trees build upon log-structured file system principles. They store data in sorted order and merge sorted files in the background. This architecture allows for high write throughput and efficient range queries.
+
+## Lucene's Similar Approach
+
+Lucene, used in Elasticsearch and Solr, applies a similar technique for managing its inverted index:
+- Stores terms and their corresponding posting lists (document IDs).
+- Uses SSTable-like files that are periodically merged.
+
+## Performance Optimizations
+
+### Improving Non-Existent Key Lookups
+- **Bloom Filters**: Probabilistic data structures to quickly determine if a key does not exist, reducing disk reads.
+
+### Compaction Strategies
+- **Size-Tiered Compaction**: Merges newer/smaller SSTables into older/larger ones.
+- **Leveled Compaction**: Spreads data across levels with non-overlapping key ranges, used by LevelDB/RocksDB for more incremental compaction.
+
+Despite complexities, LSM-trees work well at scale, especially for write-heavy workloads. They excel at sequential writes and range queries.
+
+---
+
+## B-Trees: A Different Indexing Philosophy
+
+B-trees, dating back to 1970, remain the dominant indexing structure in relational databases:
+- Organize data into **fixed-size pages** (commonly 4 KB).
+- Use **page references** to build a tree structure with a designated root.
+- Allow for fast lookups and range scans with high branching factors (several hundred).
+
+### How B-Trees Work
+- Keys guide lookups down the tree through internal nodes to leaf pages.
+- Insertion may trigger **page splits** and parent updates.
+- Depth remains logarithmic: a B-tree with millions of keys is typically 3-4 levels deep.
+
+### Ensuring Reliability
+- **Write-Ahead Log (WAL)**: Ensures crash recovery by logging changes before applying them.
+- Updating in-place requires careful concurrency control (using latches or locks).
+
+---
+
+## B-Tree Optimizations
+
+- **Copy-on-Write**: Used in LMDB to avoid in-place updates.
+- **Key Abbreviation**: Saves space in internal pages.
+- **Sequential Page Layout**: Helps improve range scan performance, though difficult to maintain.
+- **Sibling Pointers**: Enhance ordered scans by linking leaf pages.
+- **Fractal Trees**: Combine B-tree and LSM-tree characteristics.
+
+---
+
+## Comparing B-Trees and LSM-Trees
+
+| Feature                 | B-Trees                       | LSM-Trees                            |
+|------------------------|-------------------------------|--------------------------------------|
+| **Write Throughput**   | Moderate, write-amplified     | High, sequential writes              |
+| **Read Performance**   | Fast for point queries        | Slower due to multiple SSTables      |
+| **Space Usage**        | Fragmentation possible        | Better compression, less overhead    |
+| **Crash Recovery**     | Needs WAL                     | Appends and atomic segment swaps     |
+| **Concurrency**        | Needs latches                 | Background merging simplifies access |
+| **Compaction Overhead**| None                          | Can interfere with reads/writes      |
+| **Storage Layout**     | Page-based                    | SSTable segments                     |
+| **Transaction Support**| Stronger, lockable ranges     | Harder due to key duplication        |
+
+## Downsides of LSM-Trees
+
+- **Compaction Overhead**: Can affect query latency and throughput.
+- **Write Bandwidth Limit**: High write throughput can overwhelm compaction capacity.
+- **Duplicate Keys**: Multiple copies across SSTables complicate locking and isolation.
+
+---
