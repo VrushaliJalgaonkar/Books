@@ -1,4 +1,4 @@
-# Chapter 3: Storage and Retrieval – Summary (750 Words)
+# Chapter 3: Storage and Retrieval
 
 ## Overview
 
