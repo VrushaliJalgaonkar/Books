@@ -34,81 +34,81 @@ This simplistic store appends every key-value pair to a log file and retrieves t
 An **index** is a data structure that enables efficient data retrieval by avoiding full scans. It maps keys to locations (offsets) in the data file.
 
 ### Trade-offs
-- **Improves read performance**.
-- **Adds write overhead**, as the index must be updated.
-- Must be designed based on the application's query patterns.
+- **Improves read performance**
+- **Adds write overhead**, as the index must be updated
+- Must be designed based on the application's query patterns
 
 ---
 
 ## Hash Indexes
 
 ### How It Works
-- Uses a **hash map** (often in memory) to map keys to byte offsets in a log file.
-- Lookups jump directly to the data location.
+- Uses a **hash map** (often in memory) to map keys to byte offsets in a log file
+- Lookups jump directly to the data location
 
 ### Advantages
-- Fast and simple for **exact match** queries.
-- Efficient for write-heavy workloads.
+- Fast and simple for **exact match** queries
+- Efficient for write-heavy workloads
 
 ### Limitations
-- Cannot support **range queries**.
-- The entire index must **fit in memory**.
-- May degrade if memory is limited or keys are non-uniform.
+- Cannot support **range queries**
+- The entire index must **fit in memory**
+- May degrade if memory is limited or keys are non-uniform
 
 ---
 
 ## Sorted String Tables (SSTables)
 
 ### Concept
-- Maintain log entries in **sorted order by key**.
-- Enable **binary search** and efficient **range scans**.
-- Support **compaction** and **merging** for storage efficiency.
+- Maintain log entries in **sorted order by key**
+- Enable **binary search** and efficient **range scans**
+- Support **compaction** and **merging** for storage efficiency
 
 ### Compaction
-- Periodically merge segments, discard overwritten or deleted keys.
-- Improves read performance and reclaims disk space.
+- Periodically merge segments, discard overwritten or deleted keys
+- Improves read performance and reclaims disk space
 
 ### In-Memory Table (Memtable)
-- Writes go to an in-memory structure (e.g., red-black tree).
-- When full, the memtable is flushed to disk as a new SSTable.
+- Writes go to an in-memory structure (e.g., red-black tree)
+- When full, the memtable is flushed to disk as a new SSTable
 
 ---
 
 ## Log-Structured Merge Trees (LSM-Trees)
 
 ### Architecture
-- Sequence of SSTables and a memtable.
-- New writes go to memtable → flushed to disk → compacted.
+- Sequence of SSTables and a memtable
+- New writes go to memtable → flushed to disk → compacted
 
 ### Benefits
-- Write-optimized: **sequential disk writes**, batching.
-- Good for **write-heavy workloads**.
+- Write-optimized: **sequential disk writes**, batching
+- Good for **write-heavy workloads**
 
 ### Drawbacks
-- Reads may involve checking multiple SSTables.
-- Compaction overhead must be managed.
+- Reads may involve checking multiple SSTables
+- Compaction overhead must be managed
 
 ---
 
 ## B-Trees
 
 ### Structure
-- Tree-like data structure with sorted keys.
-- Nodes contain multiple keys and pointers to child nodes.
-- Designed to minimize disk I/O by maximizing data per node.
+- Tree-like data structure with sorted keys
+- Nodes contain multiple keys and pointers to child nodes
+- Designed to minimize disk I/O by maximizing data per node
 
 ### Operations
-- **Search**: Traverse from root to leaf.
-- **Insert**: Place in appropriate leaf, split if full.
+- **Search**: Traverse from root to leaf
+- **Insert**: Place in appropriate leaf, split if full
 
 ### Advantages
-- Balanced tree ensures **logarithmic search time**.
-- Efficient for **both reads and writes**.
-- Supports **range queries** natively.
+- Balanced tree ensures **logarithmic search time**
+- Efficient for **both reads and writes**
+- Supports **range queries** natively
 
 ### Disadvantages
-- Write amplification due to random I/O.
-- More complex to implement and maintain.
+- Write amplification due to random I/O
+- More complex to implement and maintain
 
 ---
 
@@ -127,73 +127,73 @@ An **index** is a data structure that enables efficient data retrieval by avoidi
 ## Optimizations and Variants
 
 ### Bloom Filters
-- Probabilistic data structure to check **whether a key might exist**.
-- Reduces unnecessary disk reads in SSTables.
+- Probabilistic data structure to check **whether a key might exist**
+- Reduces unnecessary disk reads in SSTables
 
 ### Prefix Compression
-- Store only differences between keys.
-- Saves disk space, especially with long or repetitive keys.
+- Store only differences between keys
+- Saves disk space, especially with long or repetitive keys
 
 ### Copy-on-Write B-Trees
-- Avoid in-place updates by writing changes to new pages.
-- Improves crash recovery and supports snapshots.
+- Avoid in-place updates by writing changes to new pages
+- Improves crash recovery and supports snapshots
 
 ---
-# Making an LSM-tree out of SSTables and Comparing with B-Trees
 
-## Overview of LSM-Trees
+## Making an LSM-tree out of SSTables and Comparing with B-Trees
 
+### Overview of LSM-Trees
 Log-Structured Merge-Trees (LSM-Trees) are used in modern key-value storage engines like LevelDB, RocksDB, Cassandra, and HBase. They use a combination of in-memory and on-disk data structures:
-- **Memtable**: An in-memory structure for fast writes.
-- **SSTables**: Immutable sorted files written to disk from memtables.
-- **Compaction**: Merging of SSTables to manage space and optimize reads.
 
-Originally described by Patrick O'Neil et al., LSM-trees build upon log-structured file system principles. They store data in sorted order and merge sorted files in the background. This architecture allows for high write throughput and efficient range queries.
+- **Memtable**: An in-memory structure for fast writes
+- **SSTables**: Immutable sorted files written to disk from memtables
+- **Compaction**: Merging of SSTables to manage space and optimize reads
 
-## Lucene's Similar Approach
+LSM-trees store data in sorted order and merge sorted files in the background, allowing for high write throughput and efficient range queries.
 
+### Lucene's Similar Approach
 Lucene, used in Elasticsearch and Solr, applies a similar technique for managing its inverted index:
-- Stores terms and their corresponding posting lists (document IDs).
-- Uses SSTable-like files that are periodically merged.
+- Stores terms and their corresponding posting lists (document IDs)
+- Uses SSTable-like files that are periodically merged
 
-## Performance Optimizations
+### Performance Optimizations
 
-### Improving Non-Existent Key Lookups
-- **Bloom Filters**: Probabilistic data structures to quickly determine if a key does not exist, reducing disk reads.
+#### Improving Non-Existent Key Lookups
+- **Bloom Filters** help reduce disk reads by quickly identifying missing keys
 
-### Compaction Strategies
-- **Size-Tiered Compaction**: Merges newer/smaller SSTables into older/larger ones.
-- **Leveled Compaction**: Spreads data across levels with non-overlapping key ranges, used by LevelDB/RocksDB for more incremental compaction.
+#### Compaction Strategies
+- **Size-Tiered Compaction**: Merges smaller SSTables into larger ones
+- **Leveled Compaction**: Organizes SSTables into levels with non-overlapping key ranges
 
-Despite complexities, LSM-trees work well at scale, especially for write-heavy workloads. They excel at sequential writes and range queries.
+Despite complexities, LSM-trees work well at scale, especially for write-heavy workloads.
 
 ---
 
 ## B-Trees: A Different Indexing Philosophy
 
-B-trees, dating back to 1970, remain the dominant indexing structure in relational databases:
-- Organize data into **fixed-size pages** (commonly 4 KB).
-- Use **page references** to build a tree structure with a designated root.
-- Allow for fast lookups and range scans with high branching factors (several hundred).
+B-trees remain the dominant indexing structure in relational databases. They:
+- Organize data into **fixed-size pages** (e.g., 4 KB)
+- Use **page references** to build a tree structure with a root
+- Allow fast lookups and range scans with high branching factors
 
 ### How B-Trees Work
-- Keys guide lookups down the tree through internal nodes to leaf pages.
-- Insertion may trigger **page splits** and parent updates.
-- Depth remains logarithmic: a B-tree with millions of keys is typically 3-4 levels deep.
+- Keys guide lookups down the tree from internal nodes to leaf pages
+- Insertion may trigger **page splits**
+- Depth remains logarithmic (typically 3–4 levels deep for millions of keys)
 
 ### Ensuring Reliability
-- **Write-Ahead Log (WAL)**: Ensures crash recovery by logging changes before applying them.
-- Updating in-place requires careful concurrency control (using latches or locks).
+- **Write-Ahead Log (WAL)** ensures crash recovery
+- Updating in-place requires careful concurrency control (latches/locks)
 
 ---
 
 ## B-Tree Optimizations
 
-- **Copy-on-Write**: Used in LMDB to avoid in-place updates.
-- **Key Abbreviation**: Saves space in internal pages.
-- **Sequential Page Layout**: Helps improve range scan performance, though difficult to maintain.
-- **Sibling Pointers**: Enhance ordered scans by linking leaf pages.
-- **Fractal Trees**: Combine B-tree and LSM-tree characteristics.
+- **Copy-on-Write** (used in LMDB)
+- **Key Abbreviation** for saving space
+- **Sequential Page Layout** for better scan performance
+- **Sibling Pointers** for ordered scans
+- **Fractal Trees**: Hybrid of B-trees and LSM-trees
 
 ---
 
@@ -201,19 +201,93 @@ B-trees, dating back to 1970, remain the dominant indexing structure in relation
 
 | Feature                 | B-Trees                       | LSM-Trees                            |
 |------------------------|-------------------------------|--------------------------------------|
-| **Write Throughput**   | Moderate, write-amplified     | High, sequential writes              |
-| **Read Performance**   | Fast for point queries        | Slower due to multiple SSTables      |
-| **Space Usage**        | Fragmentation possible        | Better compression, less overhead    |
-| **Crash Recovery**     | Needs WAL                     | Appends and atomic segment swaps     |
-| **Concurrency**        | Needs latches                 | Background merging simplifies access |
-| **Compaction Overhead**| None                          | Can interfere with reads/writes      |
-| **Storage Layout**     | Page-based                    | SSTable segments                     |
-| **Transaction Support**| Stronger, lockable ranges     | Harder due to key duplication        |
-
-## Downsides of LSM-Trees
-
-- **Compaction Overhead**: Can affect query latency and throughput.
-- **Write Bandwidth Limit**: High write throughput can overwhelm compaction capacity.
-- **Duplicate Keys**: Multiple copies across SSTables complicate locking and isolation.
+| Write Throughput       | Moderate, write-amplified     | High, sequential writes              |
+| Read Performance       | Fast for point queries        | Slower due to multiple SSTables      |
+| Space Usage            | Fragmentation possible        | Better compression, less overhead    |
+| Crash Recovery         | Needs WAL                     | Appends and atomic segment swaps     |
+| Concurrency            | Needs latches                 | Background merging simplifies access |
+| Compaction Overhead    | None                          | Can interfere with reads/writes      |
+| Storage Layout         | Page-based                    | SSTable segments                     |
+| Transaction Support    | Stronger, lockable ranges     | Harder due to key duplication        |
 
 ---
+
+## Other Indexing Structures - Summary
+
+### Primary vs. Secondary Indexes
+- **Primary index**: Uniquely identifies rows/documents/vertices
+- **Secondary index**: Allows access via non-primary fields
+
+#### Implementations
+- B-trees
+- Log-structured indexes
+- Handle duplicates by storing row lists or appending row IDs
+
+### Storing Values in Indexes
+- **Heap file**: Index points to data stored separately
+- **Clustered index**: Stores full row within index (e.g., InnoDB)
+- **Covering index**: Includes non-key columns
+- Trade-off: Better read performance vs. higher write/storage cost
+
+### Multi-Column Indexes
+- **Concatenated**: Combine fields (e.g., `(last_name, first_name)`)
+- **Multi-dimensional**: For geospatial/complex data (e.g., R-trees, HyperDex)
+
+### Full-Text Search and Fuzzy Indexes
+- Full-text search supports fuzzy matching, synonyms, etc.
+- Uses **Levenshtein automata** in Lucene
+- ML-based and edit-distance search possible
+
+### In-Memory Indexing
+- RAM removes many disk constraints
+- Examples: Redis, VoltDB, Memcached, TimesTen
+- Techniques: logging, replication, anti-caching, NVM
+
+---
+
+## OLTP vs. OLAP
+
+### OLTP (Online Transaction Processing)
+- Access: Small number of records, low-latency
+- Users: End users
+- Data: Current state
+- Size: GB–TB
+
+### OLAP (Online Analytical Processing)
+- Access: Large scans, aggregations
+- Users: Analysts
+- Data: Historical
+- Size: TB–PB
+
+### Example Queries
+- Revenue by store
+- Sales during promotion
+- Product bundling patterns
+
+### Data Warehousing
+- Offloads analytics from OLTP
+- **ETL**: Extract, Transform, Load
+- Uses star/snowflake schemas
+- Column-oriented storage for compression and performance
+
+### Columnar Techniques
+- **Compression**: Bitmap, RLE
+- **Vectorized Execution**: CPU-efficient processing
+- **Sorted Columns**: Improves I/O and compression
+
+### Writing to Column Stores
+- Buffered writes
+- LSM-like merges
+- Query planner handles hybrid reads
+
+---
+
+## Summary
+
+OLTP and data warehouses differ in:
+- Workloads: transactional vs. analytical
+- Storage: row-oriented vs. columnar
+- Techniques: indexes, compression, buffering
+
+These innovations allow data systems to scale efficiently while supporting both real-time operations and complex analysis.
+
